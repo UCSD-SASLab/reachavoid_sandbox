@@ -1,2 +1,2 @@
 # Sandbox Reach-Avoid Problem 
-Use `uv sync` to install venv then run `python avoid.py` or `python reachavoid.py`
+Use `uv sync` to install venv then run `uv run avoid.py` or `uv run reachavoid.py`
