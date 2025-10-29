@@ -2,6 +2,21 @@ import hj_reachability as hj
 import jax.numpy as jnp
 from dynamics import Dubins
 
+import matplotlib.pyplot as plt
+
+plt.rcParams.update(
+    {
+        "font.family": "serif",
+        "axes.labelsize": 16,
+        "axes.titlesize": 16,
+        "xtick.labelsize": 14,
+        "ytick.labelsize": 14,
+        "legend.fontsize": 14,
+        "figure.figsize": (10, 10),
+        "figure.titlesize": 16,
+        "figure.titleweight": "bold",
+    }
+)
 
 # Define obstacle such that x \in F \iff obstacle(x) <= 0
 obstacle = lambda x: jnp.linalg.norm(x[:2]) - 2.0
@@ -57,8 +72,17 @@ plt.contourf(grid.coordinate_vectors[0], grid.coordinate_vectors[1], target_sdf[
 for i, V in enumerate(V_alltimes):
     alpha = 0.1 + 0.1 * i
     plt.contour(grid.coordinate_vectors[0], grid.coordinate_vectors[1], V[:, :, theta_idx].T, levels=[0], colors="blue", alpha=alpha)
-plt.contourf(grid.coordinate_vectors[0], grid.coordinate_vectors[1], V_alltimes[-1][:, :, theta_idx].T, levels=[0, 5], colors="blue", alpha=0.1)
+plt.contourf(
+    grid.coordinate_vectors[0],
+    grid.coordinate_vectors[1],
+    V_alltimes[-1][:, :, theta_idx].T,
+    levels=[0, 5],
+    colors="blue",
+    alpha=0.1,
+)
+
+
+plt.title(f"Reachable tubes for theta = {grid.coordinate_vectors[2][theta_idx]}")
+plt.xlabel("x")
+plt.ylabel("y")
 plt.show()
-
-
-

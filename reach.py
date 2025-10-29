@@ -18,12 +18,8 @@ plt.rcParams.update(
     }
 )
 
-
-# Define obstacle such that x \in F \iff obstacle(x) <= 0
-obstacle = lambda x: jnp.linalg.norm(x[:2]) - 2.0
-
 # Define target such that x \in T \iff target(x) >= 0
-target = lambda x: jnp.linalg.norm(x[:2] - jnp.array([4., 0.])) - 0.5 
+target = lambda x: 0.5 - jnp.linalg.norm(x[:2] - jnp.array([4., 0.])) 
 
 
 # Define dynamics
@@ -37,22 +33,21 @@ grid = hj.Grid.from_lattice_parameters_and_boundary_conditions(
     periodic_dims=2,
 )
 
-# Define obstacle and avoid sdf functions
-obstacle_sdf = hj.utils.multivmap(obstacle, jnp.arange(grid.ndim))(
+target_sdf = hj.utils.multivmap(target, jnp.arange(grid.ndim))(
     grid.states
 ).squeeze()
 
 
 # Define boundary value
-boundary_value = obstacle_sdf
+boundary_value = target_sdf
 
 # Define value postprocessor (basically DP update step)
-brt = lambda t, V: jnp.minimum(V, obstacle_sdf)
+brat = lambda t, V: jnp.maximum(V, target_sdf)
 solver_settings = hj.SolverSettings.with_accuracy(
-    "very_high", value_postprocessor=brt)
+    "very_high", value_postprocessor=brat)
 
 # Define lookback time
-t_lookback = -3.0
+t_lookback = -10.0
 times = jnp.linspace(0.0, t_lookback, 10)
 
 # Solve hj reachavoid problem
@@ -60,15 +55,13 @@ V_alltimes = hj.solve(solver_settings, dynamics, grid, times, boundary_value, pr
 
 theta_idx = 0
 
-import matplotlib.pyplot as plt
 plt.figure(figsize=(10, 10))
 
-plt.contourf(grid.coordinate_vectors[0], grid.coordinate_vectors[1], obstacle_sdf[:, :, theta_idx].T, levels=[-10, 0], colors="red")
+plt.contourf(grid.coordinate_vectors[0], grid.coordinate_vectors[1], target_sdf[:, :, theta_idx].T, levels=[0, 10], colors="green")
 
-for i,V in enumerate(V_alltimes):
+for i, V in enumerate(V_alltimes):
     alpha = 0.1 + 0.1 * i
     plt.contour(grid.coordinate_vectors[0], grid.coordinate_vectors[1], V[:, :, theta_idx].T, levels=[0], colors="blue", alpha=alpha)
-
 plt.contourf(grid.coordinate_vectors[0], grid.coordinate_vectors[1], V_alltimes[-1][:, :, theta_idx].T, levels=[0, 5], colors="blue", alpha=0.1)
 
 plt.title(f"Reachable tubes for theta = {grid.coordinate_vectors[2][theta_idx]}")
