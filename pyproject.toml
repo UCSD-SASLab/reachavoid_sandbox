@@ -1,0 +1,18 @@
+[project]
+name = "hj_reachavoid"
+version = "0.1.0"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "numpy",
+  "matplotlib",
+  "jax[cpu]",
+  "hj_reachability",
+  "tqdm"
+]
+
+[project.optional-dependencies]
+gpu = ["jax[cuda12]"]        # pick cuda13 if that’s your stack
+
+# Only if you want lint/test locally via `uv sync --dev`
+[tool.uv]
+dev-dependencies = ["pytest", "black", "isort", "flake8", "mypy"]
