@@ -1,29 +1,13 @@
 import hj_reachability as hj
 import jax.numpy as jnp
 from dynamics import Dubins
-
-import matplotlib.pyplot as plt
-
-plt.rcParams.update(
-    {
-        "font.family": "serif",
-        "axes.labelsize": 16,
-        "axes.titlesize": 16,
-        "xtick.labelsize": 14,
-        "ytick.labelsize": 14,
-        "legend.fontsize": 14,
-        "figure.figsize": (10, 10),
-        "figure.titlesize": 16,
-        "figure.titleweight": "bold",
-    }
-)
-
+from utils import reachable_tube_plot, reachable_tube_video
 
 # Define obstacle such that x \in F \iff obstacle(x) <= 0
 obstacle = lambda x: jnp.linalg.norm(x[:2]) - 2.0
 
 # Define target such that x \in T \iff target(x) >= 0
-target = lambda x: jnp.linalg.norm(x[:2] - jnp.array([4., 0.])) - 0.5 
+target = lambda x: jnp.linalg.norm(x[:2] - jnp.array([4.0, 0.0])) - 0.5
 
 
 # Define dynamics
@@ -48,30 +32,16 @@ boundary_value = obstacle_sdf
 
 # Define value postprocessor (basically DP update step)
 brt = lambda t, V: jnp.minimum(V, obstacle_sdf)
-solver_settings = hj.SolverSettings.with_accuracy(
-    "very_high", value_postprocessor=brt)
+solver_settings = hj.SolverSettings.with_accuracy("very_high", value_postprocessor=brt)
 
 # Define lookback time
 t_lookback = -3.0
-times = jnp.linspace(0.0, t_lookback, 10)
+times = jnp.linspace(0.0, t_lookback, 101)
 
 # Solve hj reachavoid problem
-V_alltimes = hj.solve(solver_settings, dynamics, grid, times, boundary_value, progress_bar=True)
+V_alltimes = hj.solve(
+    solver_settings, dynamics, grid, times, boundary_value, progress_bar=True
+)
 
-theta_idx = 0
-
-import matplotlib.pyplot as plt
-plt.figure(figsize=(10, 10))
-
-plt.contourf(grid.coordinate_vectors[0], grid.coordinate_vectors[1], obstacle_sdf[:, :, theta_idx].T, levels=[-10, 0], colors="red")
-
-for i,V in enumerate(V_alltimes):
-    alpha = 0.1 + 0.1 * i
-    plt.contour(grid.coordinate_vectors[0], grid.coordinate_vectors[1], V[:, :, theta_idx].T, levels=[0], colors="blue", alpha=alpha)
-
-plt.contourf(grid.coordinate_vectors[0], grid.coordinate_vectors[1], V_alltimes[-1][:, :, theta_idx].T, levels=[0, 5], colors="blue", alpha=0.1)
-
-plt.title(f"Reachable tubes for theta = {grid.coordinate_vectors[2][theta_idx]}")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.show()
+reachable_tube_plot(grid, V_alltimes[::10], obstacle_sdf=obstacle_sdf, theta_idx=0)
+reachable_tube_video(grid, V_alltimes, obstacle_sdf=obstacle_sdf, theta_idx=0, ts=times)
